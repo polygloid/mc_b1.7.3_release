@@ -307,6 +307,15 @@ public class EntityRenderer {
     }
 
     private void renderHand(float var1, int var2) {
+        // The world slider and zoom must never stretch the arm or held item.
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        if (this.mc.gameSettings.anaglyph) {
+            GL11.glTranslatef((float)(-(var2 * 2 - 1)) * 0.07F, 0.0F, 0.0F);
+        }
+        GLU.gluPerspective(70.0F, (float)this.mc.displayWidth / (float)this.mc.displayHeight,
+                0.05F, this.farPlaneDistance * 2.0F);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
         if (this.mc.gameSettings.anaglyph) {
             GL11.glTranslatef((float)(var2 * 2 - 1) * 0.1F, 0.0F, 0.0F);
