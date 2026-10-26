@@ -24,10 +24,20 @@ public final class QolTests {
 
     public static void main(String[] args) throws Exception {
         settingsAndControls();
+        windowDefaults();
         vertexColors();
         skinFormats();
         authentication();
         System.out.println("PASS: " + checks + " checks (settings, controls, colors, skins, auth proxy)");
+    }
+
+    private static void windowDefaults() {
+        check(ClientWindow.useNativeWindow("Mac OS X", null), "Native window on macOS including Rosetta");
+        check(ClientWindow.useNativeWindow("macOS", null), "Case-independent macOS detection");
+        check(!ClientWindow.useNativeWindow("Linux", null), "Keep existing Linux window path");
+        check(!ClientWindow.useNativeWindow("Windows 11", null), "Keep existing Windows window path");
+        check(ClientWindow.useNativeWindow("Linux", "true"), "Force native window for integration testing");
+        check(!ClientWindow.useNativeWindow("Mac OS X", "false"), "Allow explicit compatibility override");
     }
 
     private static void settingsAndControls() throws Exception {
@@ -44,9 +54,14 @@ public final class QolTests {
             settings.setOptionFloatValue(EnumOptions.FOV, .75F);
             settings.keyBindAttack.keyCode = 19;
             settings.keyBindZoom.keyCode = -97;
+            settings.setOptionValue(EnumOptions.FULLBRIGHT, 1);
+            check(settings.fullbright, "Fullbright toggle enabled");
             settings.saveOptions();
             GameSettings loaded = new GameSettings(null, directory);
             check(loaded.fov == 90, "FOV persisted");
+            check(loaded.fullbright && loaded.keyBindFullbright.keyCode == 48, "Fullbright and default toggle key persisted");
+            loaded.setOptionValue(EnumOptions.FULLBRIGHT, 1);
+            check(!loaded.fullbright, "Fullbright can be disabled");
             check(loaded.keyBindAttack.keyCode == 19 && loaded.keyBindZoom.keyCode == -97, "Keyboard and mouse bindings persisted");
             check(loaded.keyBindZoom.getDisplayName().equals("Mouse 4"), "Mouse label");
             check(!new KeyBinding("Unbound", 0).matches(0), "Unbound cannot fire");

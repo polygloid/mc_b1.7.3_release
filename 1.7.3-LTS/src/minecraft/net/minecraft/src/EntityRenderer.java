@@ -14,6 +14,7 @@ public class EntityRenderer {
     public static boolean anaglyphEnable = false;
     public static int anaglyphField;
     private Minecraft mc;
+    private final ClientLighting clientLighting = new ClientLighting();
     private float farPlaneDistance = 0.0F;
     public ItemRenderer itemRenderer;
     private int rendererUpdateCount;
@@ -307,6 +308,15 @@ public class EntityRenderer {
     }
 
     private void renderHand(float var1, int var2) {
+        // The world slider and zoom must never stretch the arm or held item.
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        if (this.mc.gameSettings.anaglyph) {
+            GL11.glTranslatef((float)(-(var2 * 2 - 1)) * 0.07F, 0.0F, 0.0F);
+        }
+        GLU.gluPerspective(70.0F, (float)this.mc.displayWidth / (float)this.mc.displayHeight,
+                0.05F, this.farPlaneDistance * 2.0F);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
         GL11.glLoadIdentity();
         if (this.mc.gameSettings.anaglyph) {
             GL11.glTranslatef((float)(var2 * 2 - 1) * 0.1F, 0.0F, 0.0F);
@@ -334,7 +344,14 @@ public class EntityRenderer {
 
     }
 
+    public void updateLighting() {
+        WorldProvider provider = this.mc.theWorld == null ? null : this.mc.theWorld.worldProvider;
+        if (this.clientLighting.update(provider, this.mc.gameSettings.fullbright)
+                && provider != null && this.mc.renderGlobal != null) this.mc.renderGlobal.loadRenderers();
+    }
+
     public void updateCameraAndRender(float var1) {
+        this.updateLighting();
         if (!Display.isActive()) {
             if (System.currentTimeMillis() - this.prevFrameTime > 500L) {
                 this.mc.displayInGameMenu();

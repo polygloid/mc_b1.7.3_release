@@ -13,6 +13,7 @@ import net.minecraft.src.AxisAlignedBB;
 import net.minecraft.src.Block;
 import net.minecraft.src.ChunkCoordinates;
 import net.minecraft.src.ChunkProviderLoadOrGenerate;
+import net.minecraft.src.ClientWindow;
 import net.minecraft.src.ColorizerFoliage;
 import net.minecraft.src.ColorizerGrass;
 import net.minecraft.src.ColorizerWater;
@@ -108,6 +109,7 @@ public abstract class Minecraft implements Runnable {
     private static Minecraft theMinecraft;
     public PlayerController playerController;
     private boolean fullscreen = false;
+    private final boolean nativeWindow = ClientWindow.useNativeWindow();
     private boolean hasCrashed = false;
     public int displayWidth;
     public int displayHeight;
@@ -194,7 +196,14 @@ public abstract class Minecraft implements Runnable {
         this.serverPort = var2;
     }
 
-    public void startGame() throws LWJGLException {
+    protected void createDisplay() throws LWJGLException {
+        Canvas host = this.mcCanvas;
+        if (this.nativeWindow) {
+            this.mcCanvas = null;
+            this.hideQuitButton = false;
+            Display.setParent(null);
+            Display.setResizable(true);
+        }
         if (this.mcCanvas != null) {
             Graphics var1 = this.mcCanvas.getGraphics();
             if (var1 != null) {
@@ -234,6 +243,11 @@ public abstract class Minecraft implements Runnable {
             Display.create();
         }
 
+        if (this.nativeWindow) ClientWindow.setHostVisible(host, false);
+    }
+
+    public void startGame() throws LWJGLException {
+        this.createDisplay();
         this.mcDataDir = getMinecraftDir();
         this.saveLoader = new SaveConverterMcRegion(new File(this.mcDataDir, "saves"));
         this.gameSettings = new GameSettings(this, this.mcDataDir);
@@ -513,7 +527,7 @@ public abstract class Minecraft implements Runnable {
 
             while(this.running) {
                 try {
-                    if (this.mcApplet != null && !this.mcApplet.isActive()) {
+                    if (!this.nativeWindow && this.mcApplet != null && !this.mcApplet.isActive()) {
                         break;
                     }
 
@@ -591,19 +605,7 @@ public abstract class Minecraft implements Runnable {
                     }
 
                     this.screenshotListener();
-                    if (this.mcCanvas != null && !this.fullscreen && (this.mcCanvas.getWidth() != this.displayWidth || this.mcCanvas.getHeight() != this.displayHeight)) {
-                        this.displayWidth = this.mcCanvas.getWidth();
-                        this.displayHeight = this.mcCanvas.getHeight();
-                        if (this.displayWidth <= 0) {
-                            this.displayWidth = 1;
-                        }
-
-                        if (this.displayHeight <= 0) {
-                            this.displayHeight = 1;
-                        }
-
-                        this.resize(this.displayWidth, this.displayHeight);
-                    }
+                    this.updateDisplaySize();
 
                     this.checkGLError("Post render");
                     ++var3;
@@ -666,6 +668,7 @@ public abstract class Minecraft implements Runnable {
         if (this.gameSettings.keyBindFullscreen.matches(code)) this.toggleFullscreen();
         if (this.gameSettings.keyBindHideGui.matches(code)) this.gameSettings.hideGUI = !this.gameSettings.hideGUI;
         if (this.gameSettings.keyBindDebug.matches(code)) this.gameSettings.showDebugInfo = !this.gameSettings.showDebugInfo;
+        if (this.gameSettings.keyBindFullbright.matches(code)) this.gameSettings.setOptionValue(EnumOptions.FULLBRIGHT, 1);
         if (this.gameSettings.keyBindPerspective.matches(code)) this.gameSettings.cyclePerspective();
         if (this.gameSettings.keyBindSmoothCamera.matches(code)) this.gameSettings.smoothCamera = !this.gameSettings.smoothCamera;
         if (this.gameSettings.keyBindAttack.matches(code)) {
@@ -887,6 +890,7 @@ public abstract class Minecraft implements Runnable {
 
     public void toggleFullscreen() {
         try {
+            if (this.nativeWindow && !this.fullscreen) this.updateDisplaySize();
             this.fullscreen = !this.fullscreen;
             if (this.fullscreen) {
                 Display.setDisplayMode(Display.getDesktopDisplayMode());
@@ -921,12 +925,28 @@ public abstract class Minecraft implements Runnable {
                 this.resize(this.displayWidth, this.displayHeight);
             }
 
+            if (this.nativeWindow && !this.fullscreen) {
+                Display.setDisplayMode(new DisplayMode(this.displayWidth, this.displayHeight));
+            }
             Display.setFullscreen(this.fullscreen);
             Display.update();
         } catch (Exception var2) {
             var2.printStackTrace();
         }
 
+    }
+
+    private void updateDisplaySize() {
+        if (this.fullscreen) return;
+        int width = this.mcCanvas == null ? Display.getWidth() : this.mcCanvas.getWidth();
+        int height = this.mcCanvas == null ? Display.getHeight() : this.mcCanvas.getHeight();
+        width = Math.max(1, width);
+        height = Math.max(1, height);
+        if (width != this.displayWidth || height != this.displayHeight) this.resize(width, height);
+        if (this.nativeWindow) {
+            this.tempDisplayWidth = width;
+            this.tempDisplayHeight = height;
+        }
     }
 
     private void resize(int var1, int var2) {
