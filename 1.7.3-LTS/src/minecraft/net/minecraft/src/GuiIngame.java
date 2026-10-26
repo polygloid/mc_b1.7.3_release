@@ -36,7 +36,7 @@ public class GuiIngame extends Gui {
         }
 
         ItemStack var9 = this.mc.thePlayer.inventory.armorItemInSlot(3);
-        if (!this.mc.gameSettings.thirdPersonView && var9 != null && var9.itemID == Block.pumpkin.blockID) {
+        if (this.mc.gameSettings.thirdPersonView == 0 && var9 != null && var9.itemID == Block.pumpkin.blockID) {
             this.renderPumpkinBlur(var6, var7);
         }
 
