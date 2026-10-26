@@ -134,11 +134,15 @@ public class EntityRenderer {
         }
     }
 
+    private boolean isZooming() {
+        return this.mc.currentScreen == null && this.mc.inGameHasFocus && this.mc.gameSettings.keyBindZoom.isDown();
+    }
+
     private float getFOVModifier(float var1) {
         EntityLiving var2 = this.mc.renderViewEntity;
-        float var3 = 70.0F;
+        float var3 = this.mc.gameSettings.fov;
         if (var2.isInsideOfMaterial(Material.water)) {
-            var3 = 60.0F;
+            var3 *= 60.0F / 70.0F;
         }
 
         if (var2.health <= 0) {
@@ -146,7 +150,7 @@ public class EntityRenderer {
             var3 /= (1.0F - 500.0F / (var4 + 500.0F)) * 2.0F + 1.0F;
         }
 
-        return var3 + this.prevDebugCamFOV + (this.debugCamFOV - this.prevDebugCamFOV) * var1;
+        return (var3 + this.prevDebugCamFOV + (this.debugCamFOV - this.prevDebugCamFOV) * var1) / (this.isZooming() ? 4.0F : 1.0F);
     }
 
     private void hurtCameraEffect(float var1) {
@@ -203,7 +207,7 @@ public class EntityRenderer {
                 GL11.glRotatef(var2.prevRotationYaw + (var2.rotationYaw - var2.prevRotationYaw) * var1 + 180.0F, 0.0F, -1.0F, 0.0F);
                 GL11.glRotatef(var2.prevRotationPitch + (var2.rotationPitch - var2.prevRotationPitch) * var1, -1.0F, 0.0F, 0.0F);
             }
-        } else if (this.mc.gameSettings.thirdPersonView) {
+        } else if (this.mc.gameSettings.thirdPersonView != 0) {
             double var27 = (double)(this.thirdPersonDistanceTemp + (this.thirdPersonDistance - this.thirdPersonDistanceTemp) * var1);
             float var13;
             float var28;
@@ -216,6 +220,9 @@ public class EntityRenderer {
             } else {
                 var28 = var2.rotationYaw;
                 var13 = var2.rotationPitch;
+                if (this.mc.gameSettings.thirdPersonView == 2) {
+                    var13 += 180.0F;
+                }
                 double var14 = (double)(-MathHelper.sin(var28 / 180.0F * 3.1415927F) * MathHelper.cos(var13 / 180.0F * 3.1415927F)) * var27;
                 double var16 = (double)(MathHelper.cos(var28 / 180.0F * 3.1415927F) * MathHelper.cos(var13 / 180.0F * 3.1415927F)) * var27;
                 double var18 = (double)(-MathHelper.sin(var13 / 180.0F * 3.1415927F)) * var27;
@@ -236,6 +243,7 @@ public class EntityRenderer {
                     }
                 }
 
+                if (this.mc.gameSettings.thirdPersonView == 2) GL11.glRotatef(180.0F, 0.0F, 1.0F, 0.0F);
                 GL11.glRotatef(var2.rotationPitch - var13, 1.0F, 0.0F, 0.0F);
                 GL11.glRotatef(var2.rotationYaw - var28, 0.0F, 1.0F, 0.0F);
                 GL11.glTranslatef(0.0F, 0.0F, (float)(-var27));
@@ -310,12 +318,12 @@ public class EntityRenderer {
             this.setupViewBobbing(var1);
         }
 
-        if (!this.mc.gameSettings.thirdPersonView && !this.mc.renderViewEntity.isPlayerSleeping() && !this.mc.gameSettings.hideGUI) {
+        if (this.mc.gameSettings.thirdPersonView == 0 && !this.mc.renderViewEntity.isPlayerSleeping() && !this.mc.gameSettings.hideGUI) {
             this.itemRenderer.renderItemInFirstPerson(var1);
         }
 
         GL11.glPopMatrix();
-        if (!this.mc.gameSettings.thirdPersonView && !this.mc.renderViewEntity.isPlayerSleeping()) {
+        if (this.mc.gameSettings.thirdPersonView == 0 && !this.mc.renderViewEntity.isPlayerSleeping()) {
             this.itemRenderer.renderOverlays(var1);
             this.hurtCameraEffect(var1);
         }
@@ -339,6 +347,7 @@ public class EntityRenderer {
             this.mc.mouseHelper.mouseXYChange();
             float var2 = this.mc.gameSettings.mouseSensitivity * 0.6F + 0.2F;
             float var3 = var2 * var2 * var2 * 8.0F;
+            if (this.isZooming()) var3 *= 0.25F;
             float var4 = (float)this.mc.mouseHelper.deltaX * var3;
             float var5 = (float)this.mc.mouseHelper.deltaY * var3;
             byte var6 = 1;
