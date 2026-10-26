@@ -14,6 +14,7 @@ public class EntityRenderer {
     public static boolean anaglyphEnable = false;
     public static int anaglyphField;
     private Minecraft mc;
+    private final ClientLighting clientLighting = new ClientLighting();
     private float farPlaneDistance = 0.0F;
     public ItemRenderer itemRenderer;
     private int rendererUpdateCount;
@@ -343,7 +344,14 @@ public class EntityRenderer {
 
     }
 
+    public void updateLighting() {
+        WorldProvider provider = this.mc.theWorld == null ? null : this.mc.theWorld.worldProvider;
+        if (this.clientLighting.update(provider, this.mc.gameSettings.fullbright)
+                && provider != null && this.mc.renderGlobal != null) this.mc.renderGlobal.loadRenderers();
+    }
+
     public void updateCameraAndRender(float var1) {
+        this.updateLighting();
         if (!Display.isActive()) {
             if (System.currentTimeMillis() - this.prevFrameTime > 500L) {
                 this.mc.displayInGameMenu();

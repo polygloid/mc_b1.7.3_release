@@ -25,6 +25,7 @@ public class GameSettings {
     public int limitFramerate = 1;
     public boolean fancyGraphics = true;
     public boolean ambientOcclusion = true;
+    public boolean fullbright = false;
     public String skin = "Default";
     public KeyBinding keyBindForward = new KeyBinding("key.forward", 17);
     public KeyBinding keyBindLeft = new KeyBinding("key.left", 30);
@@ -40,6 +41,7 @@ public class GameSettings {
     public KeyBinding keyBindUse = new KeyBinding("Use / Place", -99);
     public KeyBinding keyBindPick = new KeyBinding("Pick Block", -98);
     public KeyBinding keyBindPerspective = new KeyBinding("Toggle Perspective", 63);
+    public KeyBinding keyBindFullbright = new KeyBinding("Toggle Fullbright", 48);
     public KeyBinding keyBindZoom = new KeyBinding("Zoom (hold)", 46);
     public KeyBinding keyBindHideGui = new KeyBinding("Toggle HUD", 59);
     public KeyBinding keyBindDebug = new KeyBinding("Debug Info", 61);
@@ -70,7 +72,7 @@ public class GameSettings {
     public int guiScale;
 
     public GameSettings(Minecraft var1, File var2) {
-        this.keyBindings = new KeyBinding[]{this.keyBindForward, this.keyBindLeft, this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindToggleFog, this.keyBindAttack, this.keyBindUse, this.keyBindPick, this.keyBindPerspective, this.keyBindZoom, this.keyBindHideGui, this.keyBindDebug, this.keyBindSmoothCamera, this.keyBindFullscreen, this.keyBindScreenshot, this.keyBindReload, this.keyBindHotbar[0], this.keyBindHotbar[1], this.keyBindHotbar[2], this.keyBindHotbar[3], this.keyBindHotbar[4], this.keyBindHotbar[5], this.keyBindHotbar[6], this.keyBindHotbar[7], this.keyBindHotbar[8]};
+        this.keyBindings = new KeyBinding[]{this.keyBindForward, this.keyBindLeft, this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindToggleFog, this.keyBindAttack, this.keyBindUse, this.keyBindPick, this.keyBindPerspective, this.keyBindZoom, this.keyBindFullbright, this.keyBindHideGui, this.keyBindDebug, this.keyBindSmoothCamera, this.keyBindFullscreen, this.keyBindScreenshot, this.keyBindReload, this.keyBindHotbar[0], this.keyBindHotbar[1], this.keyBindHotbar[2], this.keyBindHotbar[3], this.keyBindHotbar[4], this.keyBindHotbar[5], this.keyBindHotbar[6], this.keyBindHotbar[7], this.keyBindHotbar[8]};
         this.difficulty = 2;
         this.hideGUI = false;
         this.thirdPersonView = 0;
@@ -88,7 +90,7 @@ public class GameSettings {
     }
 
     public GameSettings() {
-        this.keyBindings = new KeyBinding[]{this.keyBindForward, this.keyBindLeft, this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindToggleFog, this.keyBindAttack, this.keyBindUse, this.keyBindPick, this.keyBindPerspective, this.keyBindZoom, this.keyBindHideGui, this.keyBindDebug, this.keyBindSmoothCamera, this.keyBindFullscreen, this.keyBindScreenshot, this.keyBindReload, this.keyBindHotbar[0], this.keyBindHotbar[1], this.keyBindHotbar[2], this.keyBindHotbar[3], this.keyBindHotbar[4], this.keyBindHotbar[5], this.keyBindHotbar[6], this.keyBindHotbar[7], this.keyBindHotbar[8]};
+        this.keyBindings = new KeyBinding[]{this.keyBindForward, this.keyBindLeft, this.keyBindBack, this.keyBindRight, this.keyBindJump, this.keyBindSneak, this.keyBindDrop, this.keyBindInventory, this.keyBindChat, this.keyBindToggleFog, this.keyBindAttack, this.keyBindUse, this.keyBindPick, this.keyBindPerspective, this.keyBindZoom, this.keyBindFullbright, this.keyBindHideGui, this.keyBindDebug, this.keyBindSmoothCamera, this.keyBindFullscreen, this.keyBindScreenshot, this.keyBindReload, this.keyBindHotbar[0], this.keyBindHotbar[1], this.keyBindHotbar[2], this.keyBindHotbar[3], this.keyBindHotbar[4], this.keyBindHotbar[5], this.keyBindHotbar[6], this.keyBindHotbar[7], this.keyBindHotbar[8]};
         this.difficulty = 2;
         this.hideGUI = false;
         this.thirdPersonView = 0;
@@ -143,6 +145,10 @@ public class GameSettings {
     }
 
     public void setOptionValue(EnumOptions var1, int var2) {
+        if (var1 == EnumOptions.FULLBRIGHT) {
+            this.fullbright = !this.fullbright;
+            if (this.mc != null && this.mc.entityRenderer != null) this.mc.entityRenderer.updateLighting();
+        }
         if (var1 == EnumOptions.INVERT_MOUSE) {
             this.invertMouse = !this.invertMouse;
         }
@@ -202,6 +208,7 @@ public class GameSettings {
     }
 
     public boolean getOptionOrdinalValue(EnumOptions var1) {
+        if (var1 == EnumOptions.FULLBRIGHT) return this.fullbright;
         switch(EnumOptionsMappingHelper.enumOptionsMappingHelperArray[var1.ordinal()]) {
         case 1:
             return this.invertMouse;
@@ -313,6 +320,8 @@ public class GameSettings {
                         this.fancyGraphics = var3[1].equals("true");
                     }
 
+                    if (var3[0].equals("fullbright")) this.fullbright = var3[1].equals("true");
+
                     if (var3[0].equals("ao")) {
                         this.ambientOcclusion = var3[1].equals("true");
                     }
@@ -368,6 +377,7 @@ public class GameSettings {
             var1.println("difficulty:" + this.difficulty);
             var1.println("fancyGraphics:" + this.fancyGraphics);
             var1.println("ao:" + this.ambientOcclusion);
+            var1.println("fullbright:" + this.fullbright);
             var1.println("skin:" + this.skin);
             var1.println("lastServer:" + this.lastServer);
 

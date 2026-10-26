@@ -54,9 +54,14 @@ public final class QolTests {
             settings.setOptionFloatValue(EnumOptions.FOV, .75F);
             settings.keyBindAttack.keyCode = 19;
             settings.keyBindZoom.keyCode = -97;
+            settings.setOptionValue(EnumOptions.FULLBRIGHT, 1);
+            check(settings.fullbright, "Fullbright toggle enabled");
             settings.saveOptions();
             GameSettings loaded = new GameSettings(null, directory);
             check(loaded.fov == 90, "FOV persisted");
+            check(loaded.fullbright && loaded.keyBindFullbright.keyCode == 48, "Fullbright and default toggle key persisted");
+            loaded.setOptionValue(EnumOptions.FULLBRIGHT, 1);
+            check(!loaded.fullbright, "Fullbright can be disabled");
             check(loaded.keyBindAttack.keyCode == 19 && loaded.keyBindZoom.keyCode == -97, "Keyboard and mouse bindings persisted");
             check(loaded.keyBindZoom.getDisplayName().equals("Mouse 4"), "Mouse label");
             check(!new KeyBinding("Unbound", 0).matches(0), "Unbound cannot fire");

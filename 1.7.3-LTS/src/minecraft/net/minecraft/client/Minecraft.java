@@ -668,6 +668,7 @@ public abstract class Minecraft implements Runnable {
         if (this.gameSettings.keyBindFullscreen.matches(code)) this.toggleFullscreen();
         if (this.gameSettings.keyBindHideGui.matches(code)) this.gameSettings.hideGUI = !this.gameSettings.hideGUI;
         if (this.gameSettings.keyBindDebug.matches(code)) this.gameSettings.showDebugInfo = !this.gameSettings.showDebugInfo;
+        if (this.gameSettings.keyBindFullbright.matches(code)) this.gameSettings.setOptionValue(EnumOptions.FULLBRIGHT, 1);
         if (this.gameSettings.keyBindPerspective.matches(code)) this.gameSettings.cyclePerspective();
         if (this.gameSettings.keyBindSmoothCamera.matches(code)) this.gameSettings.smoothCamera = !this.gameSettings.smoothCamera;
         if (this.gameSettings.keyBindAttack.matches(code)) {

@@ -113,9 +113,11 @@ public final class QolRenderTests {
                 }
             }
             checkHandProjection(mc, renderer, fovMethod);
+            checkCrosshair(mc);
+            checkFullbright(mc, renderer);
             check(GL11.glGetError() == GL11.GL_NO_ERROR, "OpenGL error during render integration tests");
             mc.running = false;
-            System.out.println("PASS: rendered RGBA, Controls, FOV slider, zoom focus, 18 front/rear orientations, fixed hand pixels at 3 FOVs with/without zoom");
+            System.out.println("PASS: rendered RGBA, Controls, FOV slider, zoom focus, 18 front/rear orientations, fixed hand pixels, perspective crosshair visibility, fullbright render/restore");
         } finally {
             Display.destroy();
         }
@@ -169,6 +171,63 @@ public final class QolRenderTests {
             if (originalBounds == null) originalBounds = bounds;
             else check(java.util.Arrays.equals(originalBounds, bounds), "Hand pixel bounds unchanged at FOV " + fov + ", zoom=" + zoom);
         }
+    }
+
+    private static void checkCrosshair(Minecraft mc) {
+        GL11.glViewport(0, 0, 854, 480);
+        GL11.glMatrixMode(GL11.GL_PROJECTION); GL11.glLoadIdentity();
+        GL11.glOrtho(0, 427, 240, 0, -1000, 1000);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW); GL11.glLoadIdentity();
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture("/gui/icons.png"));
+        GL11.glColor4f(1, 1, 1, 1);
+        GuiIngame hud = new GuiIngame(mc);
+        ByteBuffer pixels = GLAllocation.createDirectByteBuffer(40 * 40 * 4);
+        for (int perspective = 0; perspective < 3; perspective++) {
+            mc.gameSettings.thirdPersonView = perspective;
+            GL11.glClearColor(.25F, .25F, .25F, 1); GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+            hud.renderCrosshair(427, 240);
+            GL11.glReadPixels(407, 220, 40, 40, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, pixels);
+            boolean changed = false;
+            for (int i = 0; i < 40 * 40 * 4; i += 4) {
+                if ((pixels.get(i) & 255) != 64 || (pixels.get(i + 1) & 255) != 64 || (pixels.get(i + 2) & 255) != 64) changed = true;
+            }
+            check(changed == (perspective == 0), "Crosshair pixels visible only in first person, perspective=" + perspective);
+        }
+    }
+
+    private static void checkFullbright(Minecraft mc, EntityRenderer renderer) {
+        mc.entityRenderer = renderer;
+        float[] original = mc.theWorld.worldProvider.lightBrightnessTable.clone();
+        int rawLight = mc.theWorld.getBlockLightValue(0, -1, 0);
+        float normal = mc.theWorld.getLightBrightness(0, -1, 0);
+        check(normal < 1, "Dark block starts below full brightness");
+        mc.gameSettings.setOptionValue(EnumOptions.FULLBRIGHT, 1);
+        check(mc.theWorld.getLightBrightness(0, -1, 0) == 1, "Fullbright reaches the world brightness accessor");
+        check(mc.theWorld.getBlockLightValue(0, -1, 0) == rawLight, "Fullbright does not alter gameplay light levels");
+        renderBrightness(mc.theWorld.getLightBrightness(0, -1, 0), 255);
+        mc.gameSettings.setOptionValue(EnumOptions.FULLBRIGHT, 1);
+        check(java.util.Arrays.equals(original, mc.theWorld.worldProvider.lightBrightnessTable), "Toggle restores original world lighting");
+        renderBrightness(mc.theWorld.getLightBrightness(0, -1, 0), (int)(normal * 255));
+        GuiVideoSettings video = new GuiVideoSettings(null, mc.gameSettings);
+        video.setWorldAndResolution(mc, 427, 240);
+        boolean found = false;
+        for (Object entry : video.controlList) if (((GuiButton)entry).id == EnumOptions.FULLBRIGHT.ordinal()) found = true;
+        check(found, "Fullbright toggle appears in Video Settings");
+    }
+
+    private static void renderBrightness(float brightness, int expected) {
+        GL11.glDisable(GL11.GL_TEXTURE_2D); GL11.glDisable(GL11.GL_BLEND);
+        GL11.glMatrixMode(GL11.GL_PROJECTION); GL11.glLoadIdentity();
+        GL11.glOrtho(0, 1, 0, 1, -1, 1);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW); GL11.glLoadIdentity();
+        Tessellator tessellator = Tessellator.instance;
+        tessellator.startDrawingQuads(); tessellator.setColorOpaque_F(brightness, brightness, brightness);
+        tessellator.addVertex(0, 0, 0); tessellator.addVertex(1, 0, 0);
+        tessellator.addVertex(1, 1, 0); tessellator.addVertex(0, 1, 0); tessellator.draw();
+        ByteBuffer pixel = GLAllocation.createDirectByteBuffer(4);
+        GL11.glReadPixels(400, 200, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, pixel);
+        for (int i = 0; i < 3; i++) check((pixel.get(i) & 255) == expected, "Rendered world brightness " + expected);
     }
 
 }
