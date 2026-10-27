@@ -570,6 +570,7 @@ public abstract class Minecraft implements Runnable {
 
                     if (!Keyboard.isKeyDown(65)) {
                         Display.update();
+                        this.updateDisplaySize();
                     }
 
                     if (this.thePlayer != null && this.thePlayer.isEntityInsideOpaqueBlock()) {
@@ -602,10 +603,10 @@ public abstract class Minecraft implements Runnable {
                     Thread.yield();
                     if (Keyboard.isKeyDown(65)) {
                         Display.update();
+                        this.updateDisplaySize();
                     }
 
                     this.screenshotListener();
-                    this.updateDisplaySize();
 
                     this.checkGLError("Post render");
                     ++var3;
@@ -890,7 +891,10 @@ public abstract class Minecraft implements Runnable {
 
     public void toggleFullscreen() {
         try {
-            if (this.nativeWindow && !this.fullscreen) this.updateDisplaySize();
+            if (this.nativeWindow) {
+                this.toggleNativeFullscreen();
+                return;
+            }
             this.fullscreen = !this.fullscreen;
             if (this.fullscreen) {
                 Display.setDisplayMode(Display.getDesktopDisplayMode());
@@ -925,15 +929,25 @@ public abstract class Minecraft implements Runnable {
                 this.resize(this.displayWidth, this.displayHeight);
             }
 
-            if (this.nativeWindow && !this.fullscreen) {
-                Display.setDisplayMode(new DisplayMode(this.displayWidth, this.displayHeight));
-            }
             Display.setFullscreen(this.fullscreen);
             Display.update();
         } catch (Exception var2) {
             var2.printStackTrace();
         }
 
+    }
+
+    private void toggleNativeFullscreen() throws LWJGLException {
+        boolean entering = !this.fullscreen;
+        if (entering) this.updateDisplaySize();
+        DisplayMode mode = entering ? Display.getDesktopDisplayMode()
+                : new DisplayMode(Math.max(1, this.tempDisplayWidth), Math.max(1, this.tempDisplayHeight));
+        // Make one native transition instead of recreating the Cocoa window once
+        // for the mode and again for the fullscreen flag.
+        Display.setDisplayModeAndFullscreen(mode);
+        this.fullscreen = Display.isFullscreen();
+        this.resize(Math.max(1, Display.getWidth()), Math.max(1, Display.getHeight()));
+        Display.update();
     }
 
     private void updateDisplaySize() {

@@ -11,7 +11,7 @@ else
     jar=jar
 fi
 if ! "$javac" -version 2>&1 | grep -q 'javac 1.8\.'; then
-    echo 'Set JAVA_HOME to a Java 8 JDK. On Apple Silicon use an x86_64 JDK 8 with Rosetta and matching LWJGL 2 natives.' >&2
+    echo 'Set JAVA_HOME to a Java 8 JDK. On Apple Silicon, configure the maintained LWJGL 2 libraries in Prism; see PRISM-MACOS.md.' >&2
     exit 1
 fi
 mkdir -p "$build"

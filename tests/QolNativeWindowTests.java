@@ -62,6 +62,13 @@ public final class QolNativeWindowTests {
             check(Display.isFullscreen(), "Native fullscreen enabled");
             mc.toggleFullscreen();
             check(!Display.isFullscreen() && Display.getWidth() == 640 && Display.getHeight() == 360, "Fullscreen exit restores resized window");
+            Display.setDisplayMode(new DisplayMode(640, 720)); Display.update();
+            updateSize.invoke(mc);
+            check(mc.displayWidth == 640 && mc.displayHeight == 720, "Growing window height updates GUI dimensions");
+            mc.toggleFullscreen();
+            check(Display.isFullscreen() && mc.displayWidth == Display.getWidth() && mc.displayHeight == Display.getHeight(), "Fullscreen dimensions match drawable");
+            mc.toggleFullscreen();
+            check(!Display.isFullscreen() && Display.getWidth() == 640 && Display.getHeight() == 720, "Fullscreen restores enlarged window dimensions");
             ClientWindow.setHostVisible(canvas, true);
             EventQueue.invokeAndWait(() -> {});
             check(host.isVisible(), "Crash-report host can be restored");
